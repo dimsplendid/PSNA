@@ -39,8 +39,9 @@ static int lst_push_impl(Lst * self, int data){
 	new->data = data;
 
 	while(n->next != NULL){
-		n->next = new;	
+		n = n->next;	
 	}
+	n->next = new;
 	return 0;
 }
 
@@ -77,7 +78,9 @@ int main(void){
 	Lst * l = NULL;
 	init_lst(&l);
 	l->data = 10;
-	l->insert(l,100);
+	for(int i = 0;i < 10;i++){
+		l->push(l,i);
+	}
 	printf("length of l: %d\n",l->len(l));
 	l->print(l);
 	l->free(l);

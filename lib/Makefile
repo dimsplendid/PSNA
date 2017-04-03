@@ -7,7 +7,7 @@
 CC = gcc -Wall
 CFLAG = -c
 OPTFLAG =
-DEFBUGFLAG = -g
+DEBUGFLAG = -g
 LIBDIR = 
 EXTRALIBS = -lgsl -lgslcblas -lm
 INCLUDEDIR = 
@@ -22,6 +22,12 @@ all: $(EXEC) $(OBJECTS)
 
 $(EXEC): main.c $(OBJECTS)
 	$(CC)  tree.o $< -o $@ $(LIBDIR) $(EXTRALIBS)
+
+test_list: list.c 
+	$(CC) $(DEBUGFLAG) -DMAIN $< -o $@.run
+
+test_tree: tree.c list.o
+	$(CC) $(DEBUGFLAG) -DMAIN list.o $< -o $@.run
 
 clean: 
 	rm -f *.o *.run

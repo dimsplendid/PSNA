@@ -53,13 +53,13 @@ static void get_member(Tree * root, Lst * members){
 }
 
 static int update_members_impl(Tree * self){
-	self->member->free(self->member);
-	self->member=NULL;
-	init_lst(&(self->member));
 	if((self->left != NULL) || (self->right != NULL)){
+		self->member->free(self->member);
+		self->member=NULL;
+		init_lst(&(self->member));
 		self->member->data=-1;
+		get_member(self,self->member);
 	}
-	get_member(self,self->member);
 	
 	return 0;
 }
