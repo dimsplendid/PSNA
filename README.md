@@ -1,5 +1,5 @@
-# PSNA
-Photosystem network analysis tool 
+# simpleNA
+simple Photosystem network analysis tool 
 
 Use the Ford Fulkerson algrithm to analysis the photosystem's network.
 FMO, 8 sites(nodes) network.
