@@ -341,38 +341,34 @@ int parser_parse_input(FILE *ifile,parser_klist *w)
   return retvalue;
 }
 
-#ifdef TEST
+#ifdef MAIN
+int f_titile(){
+	char * tok;
+	tok = parser_next_token();
+	printf("tiltle: %s\n",tok);
+}
+int f_nsize() {
+  int tok;
 
-int f_cell()
-{
+  tok=parser_next_int();
+  printf("nsize = \"%d\"\n",tok);
+	return 0;
+}
+
+int f_cut_off() {
   double tok;
 
-  tok=parser_next_double();
-  printf("cell = \"%lf\"\n",tok);
-}
-
-int f_unit()
-{
-  char *tok;
-
   tok=parser_next_token();
-  printf("unit = \"%s\"\n",tok);
+  printf("cut off = \"%.3f\"\n",tok);
 }
 
-int f_par()
-{
-  char *tok;
-
-  tok=parser_next_token();
-  printf("par = \"%s\"\n",tok);
+int names(){
 }
 
-int f_title()
-{
-  char *tok;
+int site_energys(){
+}
 
-  tok=parser_next_line();
-  printf("title = \"%s\"\n",tok);
+int rate_matrix(){
 }
 
 int main(void){
@@ -395,50 +391,3 @@ int main(void){
 }
 
 #endif
-
-/*
- * $Log$
- * Revision 1.1  2006/10/30 06:31:31  platin
- *   - add parser library to avoid external dependence.
- *
- * Revision 1.1.1.1  2001/09/08 04:23:49  platin
- *
- * 1st time to collect & put useful functions into CVS, 
- * including:
- *
- * setup.sh    ->  Shell script to help user (me) to setup the librarys
- *
- * mathconst.h ->  Header file providing useful math constants (UMC_*)
- * physconst.h ->  Header file providing useful physical constants (FPC_*)
- * unitconv.h  ->  Header file providing unit conversion factors (UCF_*)
- *
- * libzind     ->  Library used to parser ZINDO output files.
- * parser      ->  Platin's input-file parser.
- * prot        ->  planar rotation functions
- * quad        ->  wrappers for doing numerical integration by using
- *                  quadrature methods in GSL.
- * trapezoid   ->  functions to do numerical integration by using
- *                  trapezoid method.
- * vector      ->  vector related functions,, simply simulate vector by 
- *                  array of double...
- *
- *
- * Revision 1.1.1.1  2001/07/23 20:29:31  platin
- *
- * Program to calculate Dimer NonBonded Interaction with
- * Force Field methods.
- *
- * First workable version, with WS1,WS2,SJ96 force fields.
- *
- *
- * Revision 1.2  2001/06/20 06:34:57  platin
- *
- * minor bug fixed.
- *
- * Revision 1.1  2001/06/20 00:07:19  platin
- *
- * finished the parser functions,, ready to rewrite the input file parser
- * for bandm. :)
- *
- *
- */

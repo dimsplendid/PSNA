@@ -17,7 +17,7 @@ static int free_impl(Tree * self);
 int init_tree(Tree ** self){ // call-by-value
 	// the pointer to pointer make sure that the object
 	// is not the copy.
-	if(NULL == (*self = malloc(sizeof(Tree)))){ return -1;};
+	if(NULL == (*self = malloc(sizeof(Tree)))){ return -1;}
 	(*self)->id = 0;
 	(*self)->rank = 0;
 	(*self)->max_flw = 1.0/0.0;
