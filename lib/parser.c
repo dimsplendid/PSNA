@@ -17,74 +17,105 @@
 #include <stdbool.h>
 #include "parser.h"
 
-char * activated_key=NULL;
-parser_klist * activated_klist=NULL;
+char * activated_key = NULL;
 
-parser_klist* parser_klist_alloc(int n)
-{
-  parser_klist* w;
+// methods forward declaration
+static int parser_klist_free_impl(parser_klist * self);
+// static int parser_klist_print_impl(parser_klist * self);
 
-  if (!(w=malloc(sizeof(parser_klist)))) {
+static int parser_klist_keyword_add_impl(parser_klist * self, char * str, int status, parser_callback_function func);
+static char * parser_klist_next_token_impl(parser_klist * self);
+static char * parser_klist_next_line_impl(void);
+static double parser_klist_next_double_impl(parser_klist * self);
+static int parser_klist_next_darray_impl(parser_klist * self, double * ,int);
+static int parser_klist_next_int_impl(parser_klist * self);
+static long parser_klist_next_long_impl(parser_klist * self);
+static int parser_klist_set_delim_impl(parser_klist * self, char *);
+static int parser_klist_set_rem_impl(parser_klist * self, char *);
+static int parser_klist_set_default_func_impl(parser_klist * self,parser_default_function );
+static int parser_klist_input_impl(parser_klist * self, FILE *);
+static int parser_klist_dispatch_impl(parser_klist * self, char * key);
+// parser key list initialize
+
+int init_parser_klist(parser_klist ** self,int n){
+  if (NULL == ((*self)=malloc(sizeof(parser_klist)))) {
     fprintf(stderr,"error in parser.c (parser_klist_alloc): %s \n", 
 	    strerror(errno));
     exit(errno);
   }
 
-  w->size=0;
-  strncpy(w->delim_str,PARSER_DEFAULT_DELIM_CHARS,PARSER_STRING_BUFFER_SIZE);
-  strncpy(w->rem_str,PARSER_DEFAULT_REM_CHARS,PARSER_STRING_BUFFER_SIZE);
+  (*self)->size=0;
+  strncpy((*self)->delim_str,PARSER_DEFAULT_DELIM_CHARS,PARSER_STRING_BUFFER_SIZE);
+  strncpy((*self)->rem_str,PARSER_DEFAULT_REM_CHARS,PARSER_STRING_BUFFER_SIZE);
 
-  if (!(w->member=malloc(n*sizeof(parser_keyword)))) {
+  if (NULL == ((*self)->member=malloc(n*sizeof(parser_keyword)))) {
     fprintf(stderr,"error in parser.c (parser_klist_alloc): %s \n",
 	    strerror(errno));
     exit(errno);
   }
-  return w;
+	
+	// init methods
+	(*self)->free = parser_klist_free_impl;
+//	(*self)->print = parser_klist_print_impl;
+	(*self)->print = NULL;
+	(*self)->keyword_add = parser_klist_keyword_add_impl;
+	(*self)->next_token = parser_klist_next_token_impl;
+	(*self)->next_line = parser_klist_next_line_impl;
+	(*self)->next_double = parser_klist_next_double_impl;
+	(*self)->next_darray = parser_klist_next_darray_impl;
+	(*self)->next_int = parser_klist_next_int_impl;
+	(*self)->next_long = parser_klist_next_long_impl;
+	(*self)->set_delim = parser_klist_set_delim_impl;
+	(*self)->set_rem = parser_klist_set_rem_impl;
+	(*self)->set_default_func = parser_klist_set_default_func_impl;
+	(*self)->input = parser_klist_input_impl;
+	(*self)->dispatch = parser_klist_dispatch_impl;
+
+  return 0;
 }
 
-void parser_klist_free(parser_klist* w)
-{
-  free(w->member);
-  free(w);
+static int parser_klist_free_impl(parser_klist * self){
+  free(self->member);
+  free(self);
+	return 0;
 }
 
-int parser_keyword_add(parser_klist* w, char *str, 
-		       int status, parser_callback_function func)
-{
+static int parser_klist_keyword_add_impl(parser_klist * self, char *str, 
+		       int status, parser_callback_function func){
   int i;
 
-  i= w->size;
-  w->member[i].name=str;
-  w->member[i].status=status;
-  w->member[i].function=func;
-  w->size++;
+  i= self->size;
+  self->member[i].name=str;
+  self->member[i].status=status;
+  self->member[i].function=func;
+  self->size++;
+	return 0;
 }
 
-int parser_set_delim(parser_klist* w, char *str)
-{
-  strncpy(w->delim_str,str,PARSER_STRING_BUFFER_SIZE);
+static int parser_klist_set_delim_impl(parser_klist * self, char * str){
+  strncpy(self->delim_str,str,PARSER_STRING_BUFFER_SIZE);
+	return 0;
 }
 
-int parser_set_rem(parser_klist* w, char *str)
-{
-  strncpy(w->rem_str,str,PARSER_STRING_BUFFER_SIZE);
+static int parser_klist_set_rem_impl(parser_klist * self, char *str){
+  strncpy(self->rem_str,str,PARSER_STRING_BUFFER_SIZE);
+	return 0;
 }
 
-int parser_default_func(char * str)
-{
+static int parser_default_func(char * str){
   printf("ERROR: Unknown keyword \"%s\" !\n",str);
   return 0;
 }
 
+// by defaut 
 parser_default_function parser_f=parser_default_func;
 
-int parser_set_default_func(parser_default_function func)
-{
+static int parser_klist_set_default_func_impl(parser_klist * self,parser_default_function func){
   parser_f=func;
+	return 0;
 }
 
-int isinstr(char c,char *str)
-{
+static int isinstr(char c,char *str){
   char *p;
 
   p=str;
@@ -97,8 +128,7 @@ int isinstr(char c,char *str)
 }
 
 
-char *parser_strtok(char *s,char *delim)
-{
+static char * parser_strtok(char *s,char *delim){
   static char *pstr=NULL;
   static char *p=NULL;
 
@@ -109,9 +139,12 @@ char *parser_strtok(char *s,char *delim)
   }
 
   /* skip a delim sections to the beginning of the next token */
-  while(isinstr(*pstr,delim))
+  while(isinstr(*pstr,delim)){
     pstr++;
-
+	}
+#ifdef DEBUG_PARSER
+	printf("pstr: %p\n",pstr);
+#endif
   if (*pstr == '\0')
     return NULL;
 
@@ -131,8 +164,7 @@ char *parser_strtok(char *s,char *delim)
   return (char *) pstr;
 }
 
-int prefix_strcasecmp(const char *a, const char *b)
-{
+static int prefix_strcasecmp(const char *a, const char *b){
   int i;
   i=0;
   
@@ -145,12 +177,9 @@ int prefix_strcasecmp(const char *a, const char *b)
   return 0;
 }
 
-int parser_getline(FILE *ifile, size_t buffersize, char *buffer, 
-		   char *delim, char *rem)
-{
-  int i,j;
+static int parser_klist_getline_impl(FILE *ifile, size_t buffersize, char *buffer, 
+		   char *delim, char *rem){
   int len;
-  int delim_state;
   
   buffer[0]='\\';
   buffer[1]='\0';
@@ -163,7 +192,7 @@ int parser_getline(FILE *ifile, size_t buffersize, char *buffer,
     /* rephase the string */
 
     /* strip off comment chars */
-    i=0;
+    int i = 0;
     while(buffer[i] != '\0' && !isinstr(buffer[i],rem) )
       i++;
     buffer[i]='\0';
@@ -189,32 +218,30 @@ int parser_getline(FILE *ifile, size_t buffersize, char *buffer,
       return len;
     }
   }
-
   return len;
 }
 
-char *parser_next_token()
-{
-  return parser_strtok(NULL,activated_klist->delim_str);
+static char * parser_klist_next_token_impl(parser_klist * self){
+  return parser_strtok(NULL,self->delim_str);
 }
 
-char *parser_next_line()
-{
+static char * parser_klist_next_line_impl(void){
   char *pstr;
-
-  if (!(pstr=parser_strtok(NULL,"\n"))) {
+  if (NULL == (pstr=parser_strtok(NULL,"\n"))) {
     fprintf(stderr,"Error while parsing keyword \"%s\"!\n",activated_key);
     exit(EXIT_FAILURE);
   }
-  
   return pstr;
 }
 
-double parser_next_double()
-{
+static double parser_klist_next_double_impl(parser_klist * self){
   char *pstr;
+#ifdef DEBUG_PARSER
+	printf("next double...\n");
 
-  if (!(pstr=parser_strtok(NULL,activated_klist->delim_str))) {
+#endif
+
+  if (NULL == (pstr=parser_strtok(NULL,self->delim_str))) {
     fprintf(stderr,"Error while parsing keyword \"%s\"!\n",activated_key);
     exit(EXIT_FAILURE);
   }
@@ -222,13 +249,13 @@ double parser_next_double()
   return atof(pstr);  
 }
 
-int parser_next_darray(double *vec,int length)
-{
+static int parser_klist_next_darray_impl(parser_klist * self,
+                                     double *vec,int length){
   char *pstr;
   int i;
 
   for (i=0;i<length;i++) {
-    if (!(pstr=parser_strtok(NULL,activated_klist->delim_str))) {
+    if (NULL == (pstr=parser_strtok(NULL,self->delim_str))) {
       fprintf(stderr,"Error while parsing keyword \"%s\"!\n",activated_key);
       exit(EXIT_FAILURE);
     }
@@ -237,73 +264,62 @@ int parser_next_darray(double *vec,int length)
   return length;
 }
 
-int parser_next_int()
-{
+static int parser_klist_next_int_impl(parser_klist * self){
   char *pstr;
-
-  if (!(pstr=parser_strtok(NULL,activated_klist->delim_str))) {
+  if (NULL == (pstr=parser_strtok(NULL,self->delim_str))) {
     fprintf(stderr,"Error while parsing keyword \"%s\"!\n",activated_key);
     exit(EXIT_FAILURE);
   }
-  
   return atoi(pstr);  
 }
 
-long parser_next_long()
-{
+static long parser_klist_next_long_impl(parser_klist * self){
   char *pstr;
 
-  if (!(pstr=parser_strtok(NULL,activated_klist->delim_str))) {
+  if (NULL == (pstr=parser_strtok(NULL,self->delim_str))) {
     fprintf(stderr,"Error while parsing keyword \"%s\"!\n",activated_key);
     exit(EXIT_FAILURE);
   }
-  
   return atol(pstr);  
 }
 
-int parser_dispatch(char *key, parser_klist *w)
-{
-  int wsize;
-  int i;
+static int parser_klist_dispatch_impl(parser_klist * self, char * key){
+  int wsize = self->size;
   
-  wsize=w->size;
-  for(i=0;i<wsize;i++) {
+  for(int i=0;i < wsize;i++) {
 
 #ifdef DEBUG_PARSER
-    printf("key = \"%s\", name = \"%s\"\n",key,w->member[i].name);
+    printf("key = \"%s\", name = \"%s\"\n",key,self->member[i].name);
 #endif
 
-    if(!prefix_strcasecmp(w->member[i].name,key)) {
-      if(w->member[i].status==PARSER_DONE) {
+    if(!prefix_strcasecmp(self->member[i].name,key)) {
+      if(self->member[i].status==PARSER_DONE) {
 	printf("ERROR: Mutiple definition of keyword \"%s\" !\n",key);
 	return 0;
       }
-      activated_key=w->member[i].name; /* set the activated keyword */
-      w->member[i].function(); /* run the call back function */
-      if(w->member[i].status != PARSER_MULTIPLE)
-	w->member[i].status=PARSER_DONE;
+      activated_key=self->member[i].name; /* set the activated keyword */
+      self->member[i].function(self); /* run the call back function */
+      if(self->member[i].status != PARSER_MULTIPLE)
+	self->member[i].status=PARSER_DONE;
       return 1; /* sucess */
     }
   }
-  
   return parser_f(key);
 }
 
-int parser_parse_input(FILE *ifile,parser_klist *w)
-{
+static int parser_klist_input_impl(parser_klist * self, FILE *ifile){
   char cbuffer[PARSER_FILE_BUFFER_SIZE];
   char *key=NULL;
-  int wsize;
+  int wsize = self->size;
   int retvalue=1;
   int i,j;
   
-  activated_klist=w; /* set the activated keylist */
-  wsize=w->size;
+  // activated_klist=w; /* set the activated keylist */
 
   /* put everything into cbuffer */
   j=0;
-  while(i=parser_getline(ifile, PARSER_FILE_BUFFER_SIZE-j, cbuffer+j, 
-			 activated_klist->delim_str, activated_klist->rem_str)) {
+  while(0 != (i = parser_klist_getline_impl(ifile, PARSER_FILE_BUFFER_SIZE-j, cbuffer+j, 
+			 self->delim_str, self->rem_str))) {
     j+=i;
     cbuffer[j]='\n'; /* space with a newline */
     j++;
@@ -315,78 +331,82 @@ int parser_parse_input(FILE *ifile,parser_klist *w)
 #endif
 
   /* init the token pool */
-  key=parser_strtok(cbuffer,activated_klist->delim_str);
-  if( !parser_dispatch(key,w))
+  key=parser_strtok(cbuffer,self->delim_str);
+  if( !(self->dispatch(self,key)))
     return 0;
 
   /* process all tokens */
-  while(key=parser_next_token()) {
+  while((key = parser_klist_next_token_impl(self))) {
 
 #ifdef DEBUG_PARSER
     printf("Processing \"%s\"\n",key);
 #endif
 
-    if( !parser_dispatch(key,w))
+    if( !(self->dispatch(self,key)))
       return 0;
   }
   
   /* check if we got al required parameters */
-  for(i=0;i<wsize;i++){
-    if(w->member[i].status == PARSER_REQUIRED) {
-      printf("ERROR: REQUIRED keyword \"%s\" not found!\n",w->member[i].name);
+  for(int i = 0;i<wsize;i++){
+    if(self->member[i].status == PARSER_REQUIRED) {
+      printf("ERROR: REQUIRED keyword \"%s\" not found!\n",self->member[i].name);
       retvalue=0;
     }
   }
-
   return retvalue;
 }
 
 #ifdef MAIN
-int f_titile(){
-	char * tok;
-	tok = parser_next_token();
-	printf("tiltle: %s\n",tok);
-}
-int f_nsize() {
-  int tok;
 
-  tok=parser_next_int();
-  printf("nsize = \"%d\"\n",tok);
+int f_cell(parser_klist * klist){
+  double tok;
+
+  tok= klist->next_double(klist);
+  printf("cell = \"%lf\"\n",tok);
 	return 0;
 }
 
-int f_cut_off() {
-  double tok;
+int f_unit(parser_klist * klist){
+  char *tok;
 
-  tok=parser_next_token();
-  printf("cut off = \"%.3f\"\n",tok);
+  tok=klist->next_token(klist);
+  printf("unit = \"%s\"\n",tok);
+	return 0;
 }
 
-int names(){
+int f_par(parser_klist * klist){
+  char *tok;
+
+  tok = klist->next_token(klist);
+  printf("par = \"%s\"\n",tok);
+	return 0;
 }
 
-int site_energys(){
+int f_title(parser_klist * klist){
+  char *tok;
+
+  tok=klist->next_line(klist);
+  printf("title = \"%s\"\n",tok);
+	return 0;
 }
 
-int rate_matrix(){
-}
 
 int main(void){
-  int num,i;
+	// int num, i;
   parser_klist *list;
   
-  list=parser_klist_alloc(300);
+  init_parser_klist(&list,300);
 
-  parser_keyword_add(list,"Cell",PARSER_REQUIRED,f_cell);
-  parser_keyword_add(list,"Unit",PARSER_OPTIONAL,f_unit);
-  parser_keyword_add(list,"par",PARSER_OPTIONAL,f_par);
-  parser_keyword_add(list,"title",PARSER_OPTIONAL,f_title);
+  list->keyword_add(list,"Cell",PARSER_REQUIRED,f_cell);
+  list->keyword_add(list,"Unit",PARSER_OPTIONAL,f_unit);
+  list->keyword_add(list,"par",PARSER_OPTIONAL,f_par);
+  list->keyword_add(list,"title",PARSER_OPTIONAL,f_title);
 
 	printf("test_parser...\n");
-  if(!parser_parse_input(stdin,list))
+  if(!list->input(list,stdin))
     printf("Input file parsing error!\n");
 
-  parser_klist_free(list);
+  list->free(list);
 	return 0;
 }
 
