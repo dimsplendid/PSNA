@@ -23,7 +23,7 @@ struct lst{
 	func len, insert,push , print, free;
 };
 
-int init_lst(Lst ** self);
+int init_Lst(Lst ** self);
 
 struct tree{
 	// attributes

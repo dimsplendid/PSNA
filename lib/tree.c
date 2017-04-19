@@ -23,7 +23,7 @@ int init_tree(Tree ** self){ // call-by-value
 	(*self)->max_flw = 1.0/0.0;
 	(*self)->member = NULL;
 	(*self)->size = 0;
-	init_lst(&((*self)->member));
+	init_Lst(&((*self)->member));
 	(*self)->left = NULL;
 	(*self)->right = NULL;
 	(*self)->parent = NULL;
@@ -56,7 +56,7 @@ static int update_members_impl(Tree * self){
 	if((self->left != NULL) || (self->right != NULL)){
 		self->member->free(self->member);
 		self->member=NULL;
-		init_lst(&(self->member));
+		init_Lst(&(self->member));
 		self->member->data=-1;
 		get_member(self,self->member);
 	}

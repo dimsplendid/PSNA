@@ -9,7 +9,7 @@ static int lst_print_impl(Lst * self);
 static int lst_len_impl(Lst * self);
 static int lst_free_impl(Lst * self);
 
-int init_lst(Lst ** self){ // call-by-value
+int init_Lst(Lst ** self){ // call-by-value
 	// the pointer to pointer make sure that the object
 	// is not the copy.
 	if(NULL == (*self = malloc(sizeof(Lst)))){ return -1;};
@@ -26,7 +26,7 @@ int init_lst(Lst ** self){ // call-by-value
 static int lst_insert_impl(Lst * self, Lst * new){
 	Lst * n1 = self;
 	Lst * n2 = new;
-	init_lst(&n2);
+	init_Lst(&n2);
 	n2->next = n1->next;
 	n1->next = n2;
 	return 0;
@@ -35,7 +35,7 @@ static int lst_insert_impl(Lst * self, Lst * new){
 static int lst_push_impl(Lst * self, int data){
 	Lst * n = self;
 	Lst * new = NULL;
-	init_lst(&new);
+	init_Lst(&new);
 	new->data = data;
 
 	while(n->next != NULL){
@@ -76,7 +76,7 @@ static int lst_free_impl(Lst * self){
 #ifdef MAIN
 int main(void){
 	Lst * l = NULL;
-	init_lst(&l);
+	init_Lst(&l);
 	l->data = 10;
 	for(int i = 0;i < 10;i++){
 		l->push(l,i);
