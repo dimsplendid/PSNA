@@ -10,39 +10,80 @@
 typedef struct lst Lst; // dynamic link list
 typedef struct tree Tree;
 typedef struct node Node;
-typedef struct link Link;
-typedef struct graph Grahp;
+typedef struct edge Edge;
+typedef struct graph Graph;
 
 typedef int (*func)(); // general call-back function type
 
+// general lst
 struct lst{
+	// empty head, general data type list
+	
 	// attributes
-	int data;
+	void * pdata; // use for any data type
+	Lst * pre;
 	Lst * next;
 	// methods
-	func len, insert,push , print, free;
+	func print, free;
+	int (*len)(Lst * self);
+	int (*push)(Lst * self, Lst * newNode);
+	void * (*pop)(Lst * self);
+	int (*del)(Lst * self, Lst * delNode);
+	Lst * (*at)(Lst * self,int idx);
 };
 
 int init_Lst(Lst ** self);
 
+// B-tree
 struct tree{
 	// attributes
 	int id;
 	int rank;
-	double max_flw;
-	Lst * member;
-	int size;
-
-	Tree * left;
-	Tree * right;
-	Tree * parent;
+	Lst * members;
+	void * pdata;
+	
+	Tree * l; // left sub tree
+	Tree * r; // right sub tree
+	Tree * p; // parent
 	
 	// methodes
-	func update_members;
-	func cluster;
-	func reconstruct;
-	func print, fprint;
-	func free;
+	func print, free;
+	int (*fprint)(Tree *,char * fname);
+};
+int init_Tree(Tree ** self);
+
+// Network
+
+int init_Node(Node ** self);
+struct node{
+	int id;
+	char * label;
+	double data; // site energy, cm^-1 for pigments
+	//method
+	func print, free;
 };
 
-int init_Tree(Tree ** self);
+int init_Edge(Edge ** self);
+struct edge{
+	int id;
+	Node * s;
+	Node * t;
+	double c;// capacity
+	double f;// flow
+	// methods
+	func print, free;
+};
+
+int init_Graph(Graph ** self);
+struct graph{
+	Lst * nodes;
+	Lst * edges;
+	gsl_matrix * AM; // adjacency matrix
+	gsl_vector * WM; // node weight
+	// methods
+	func print, free;
+	int(*addEdge)(Graph * self, Node * s, Node * t);
+	Node * (*getNode)(Graph * self, int id);
+	Edge * (*getEdge)(Graph * self, int id);
+};
+
