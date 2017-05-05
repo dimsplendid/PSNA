@@ -5,7 +5,7 @@
 ############################################
 
 CC = gcc -Wall
-CFLAG = -c
+CFLAG = 
 OPTFLAG =
 DEBUGFLAG = -g
 LIBDIR = 
@@ -18,7 +18,7 @@ OBJECTS = tree.o
 all: $(EXEC) $(OBJECTS)
 
 %.o: %.c %.h
-	$(CC) -c $(CFLAG) $(INCLUDEDIR) $< -o $@
+	$(CC) -c $(CFLAG) $(INCLUDEDIR) $< -o $@ $(EXTRALIBS)
 
 $(EXEC): main.c $(OBJECTS)
 	$(CC)  tree.o $< -o $@ $(LIBDIR) $(EXTRALIBS)
@@ -28,6 +28,12 @@ test_list: list.c
 
 test_tree: tree.c list.o
 	$(CC) $(DEBUGFLAG) -DMAIN list.o $< -o $@.run
+
+test_parser: parser.c
+	$(CC) $(DEBUGFLAG) -DMAIN $< -o $@.run
+
+test_params: params.c parser.o aux.o
+	$(CC) $(DEBUGFLAG) -DMAIN parser.o aux.o $< -o $@.run $(EXTRALIBS)
 
 clean: 
 	rm -f *.o *.run
