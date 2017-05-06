@@ -6,6 +6,7 @@
 
 #pragma once
 #include<stdlib.h>
+#include<gsl/gsl_matrix.h>
 
 typedef struct lst Lst; // dynamic link list
 typedef struct tree Tree;
@@ -23,12 +24,15 @@ struct lst{
 	void * pdata; // use for any data type
 	Lst * pre;
 	Lst * next;
+	
 	// methods
 	func print, free;
+
 	int (*len)(Lst * self);
-	int (*push)(Lst * self, Lst * newNode);
+	int (*push)(Lst * self, void * pdata);
 	void * (*pop)(Lst * self);
-	int (*del)(Lst * self, Lst * delNode);
+	void * (*find)(Lst * self, void * pdata);
+	int (*del)(Lst * self, void * pdata);
 	Lst * (*at)(Lst * self,int idx);
 };
 

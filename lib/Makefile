@@ -24,7 +24,7 @@ $(EXEC): main.c $(OBJECTS)
 	$(CC)  tree.o $< -o $@ $(LIBDIR) $(EXTRALIBS)
 
 test_list: list.c 
-	$(CC) $(DEBUGFLAG) -DMAIN $< -o $@.run
+	$(CC) $(DEBUGFLAG) -DMAIN $< -o $@.run $(EXTRALIBS)
 
 test_tree: tree.c list.o
 	$(CC) $(DEBUGFLAG) -DMAIN list.o $< -o $@.run
