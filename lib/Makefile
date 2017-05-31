@@ -12,16 +12,12 @@ LIBDIR =
 EXTRALIBS = -lgsl -lgslcblas -lm
 INCLUDEDIR = 
 
-EXEC = tree.run
-OBJECTS = tree.o
+OBJECTS = object.o parser.o params.o list.o tree.o
 
-all: $(EXEC) $(OBJECTS)
+all: $(OBJECTS)
 
 %.o: %.c %.h
 	$(CC) -c $(CFLAG) $(INCLUDEDIR) $< -o $@ $(EXTRALIBS)
-
-$(EXEC): main.c $(OBJECTS)
-	$(CC)  tree.o $< -o $@ $(LIBDIR) $(EXTRALIBS)
 
 test_list: list.c 
 	$(CC) $(DEBUGFLAG) -DMAIN $< -o $@.run $(EXTRALIBS)

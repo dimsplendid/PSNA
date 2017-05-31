@@ -22,7 +22,7 @@ struct lst{
 	
 	// attributes
 	void * pdata; // use for any data type
-	Lst * pre;
+	Lst * prev;
 	Lst * next;
 	
 	// methods

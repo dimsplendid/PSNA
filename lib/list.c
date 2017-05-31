@@ -3,6 +3,8 @@
 
 #include "data_struct.h"
 
+#define METHOD(NAME) (*self)->NAME = lst_ ##  NAME ## _impl
+
 static int lst_free_impl(Lst * self);
 static int lst_len_impl(Lst * self);
 static void * lst_pop_impl(Lst * self);
@@ -12,6 +14,7 @@ static Lst * lst_at_impl(Lst * self,int idx);
 // default, use for int
 static void * lst_find_int_impl(Lst * self, void * pdata);
 static int lst_push_int_impl(Lst * self,void * pdata);
+static int lst_print_int_impl(Lst * self);
 
 int init_Lst(Lst ** self){ // call-by-value
 	// the pointer to pointer make sure that the object
@@ -19,16 +22,21 @@ int init_Lst(Lst ** self){ // call-by-value
 	if(NULL == (*self = malloc(sizeof(Lst)))){ return -1;};
 	(*self)->pdata = NULL;
 	(*self)->next = NULL;
-	(*self)->pre = NULL;
+	(*self)->prev = NULL;
 
-	(*self)->len = lst_len_impl;
-	(*self)->push = lst_push_int_impl;
-	(*self)->pop = lst_pop_impl;
+	METHOD(len);
+	METHOD(pop);
+	METHOD(at);
+	METHOD(del);
+
+	// depend on data type methods
+	// default using int
+	// need modified(polymorphism) for
+	// other data type
 	(*self)->find = lst_find_int_impl;
-	(*self)->at = lst_at_impl;
-	(*self)->del = lst_del_impl;
-
-	(*self)->print = NULL; // depend on data type
+	(*self)->push = lst_push_int_impl;
+	(*self)->print = lst_print_int_impl; 
+	
 	(*self)->free = lst_free_impl;
 	return 0;
 }
@@ -36,7 +44,7 @@ int init_Lst(Lst ** self){ // call-by-value
 static int lst_del_impl(Lst * self, void * pdata){
 	Lst * delNode;
 	while(NULL != (delNode = self->find(self,pdata))){
-		delNode->pre->next = delNode->next;
+		delNode->prev->next = delNode->next;
 		free(delNode->pdata);
 		free(delNode);
 	}
@@ -44,17 +52,14 @@ static int lst_del_impl(Lst * self, void * pdata){
 }
 
 static Lst * lst_at_impl(Lst * self, int idx){
-	Lst * tmp = self;
-	int i = idx-1;
-	while(i > 0){
-		if(tmp->next == NULL){
-			printf("lst[%d] out of range\n",idx);
-			exit(EXIT_FAILURE);
-		}
-		else{
-			tmp = tmp->next;
-			i--;
-		}
+	// zero-based numbering
+	if (idx >= self->len(self)){
+		printf("lst[%d] out of  range\n",idx);
+		exit(EXIT_FAILURE);
+	}
+	Lst * tmp = self->next;
+	for(int i = 0; i < idx; i++){
+		tmp = tmp->next;
 	}
 	return tmp;
 }
@@ -79,7 +84,6 @@ static int lst_free_impl(Lst * self){
 }
 
 
-// default lst impl, using for data type is int
 static int lst_print_int_impl(Lst * self){
 	Lst * n = self->next;
 	while(n != NULL){
@@ -101,15 +105,15 @@ static int lst_len_impl(Lst * self){
 }
 
 static void * lst_find_int_impl(Lst * self, void * pdata){
+	// FIX
 	// return the first data found in lst
-	Lst * tmp = self;
+	Lst * tmp = self->next;
 	int data = *(int*)pdata;
-	do{
-		int find = *(int*)tmp->pdata;
-		if(find == data){ return tmp;} 
-		else{tmp = tmp->next;}
-	}while(tmp->next != NULL);
-	return NULL;
+	while(tmp != NULL){
+		if( data == *(int*)tmp->pdata){break;}
+		tmp = tmp->next;
+	}
+	return tmp;
 }
 
 static int lst_push_int_impl(Lst * self, void * pdata){
@@ -123,6 +127,7 @@ static int lst_push_int_impl(Lst * self, void * pdata){
 		tmp = tmp->next;
 	}
 	tmp->next = new;
+	new->prev = tmp;
 	return 0;
 }
 
@@ -130,13 +135,14 @@ static int lst_push_int_impl(Lst * self, void * pdata){
 #ifdef MAIN
 int main(void){
 	Lst * l = NULL;
-	init_Lst(&l);
-	
-	l->print = lst_print_int_impl;
+	init_Lst(&l);	
 
 	for(int i = 0;i < 10;i++){
 		l->push(l,&i);
 	}
+	int del = 2;
+	l->push(l,&del);
+	l->del(l,&del);
 	printf("length of l: %d\n",l->len(l));
 	l->print(l);
 	l->free(l);
